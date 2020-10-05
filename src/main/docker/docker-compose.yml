@@ -1,0 +1,7 @@
+version: '3'
+services:
+  chat-application:
+    container_name: "chat-app"
+    image: "example:1.0"
+    ports:
+      - "9000:9000"
