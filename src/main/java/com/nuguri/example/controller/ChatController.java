@@ -1,10 +1,12 @@
 package com.nuguri.example.controller;
 
 import com.nuguri.example.model.ChatMessage;
+import com.nuguri.example.model.MessageType;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -16,23 +18,25 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 public class ChatController {
 
-    @RequestMapping("/chat")
-    public String chat() {
-        return "chat";
-    }
-
-    @MessageMapping("/chat/send")
+    @MessageMapping("/topic")
     @SendTo("/topic/public")
-    public ChatMessage send(@Payload ChatMessage chatMessage) {
+    public ChatMessage publicMessage(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
+        if (chatMessage.getMessageType().equals(MessageType.JOIN)) {
+            headerAccessor
+                    .getSessionAttributes()
+                    .put("username", chatMessage.getSender());
+        }
         return chatMessage;
     }
 
-    @MessageMapping("/chat/add")
-    @SendTo("/topic/public")
-    public ChatMessage add(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
-        headerAccessor
-                .getSessionAttributes()
-                .put("username", chatMessage.getSender());
+    @MessageMapping("/queue")
+    @SendToUser("/queue/direct")
+    public ChatMessage directMessage(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
+        if (chatMessage.getMessageType().equals(MessageType.JOIN)) {
+            headerAccessor
+                    .getSessionAttributes()
+                    .put("username", chatMessage.getSender());
+        }
         return chatMessage;
     }
 

@@ -10,7 +10,9 @@ const chatPage = document.querySelector('#chat-page');
 const usernameForm = document.querySelector('#usernameForm');
 const messageForm = document.querySelector('#messageForm');
 const messageInput = document.querySelector('#message');
-const messageArea = document.querySelector('#messageArea');
+
+const messageArea = document.querySelector('.messages');
+
 const connectingElement = document.querySelector('.connecting');
 
 let stompClient;
@@ -23,14 +25,14 @@ function connect(event) {
         chatPage.classList.remove('hidden');
         const socket = new SockJS('/ws');
         stompClient = Stomp.over(socket);
-        stompClient.connect({}, onConnected, onError);
+        stompClient.connect({login:"foo"}, onConnected, onError);
     }
     event.preventDefault();
 }
 
 function onConnected() {
-    stompClient.subscribe('/topic/public', onMessageReceived); // 구독
-    stompClient.send('/app/chat/add', {}, JSON.stringify({sender: username, messageType: 'JOIN'}));
+    stompClient.subscribe('/topic/public', onMessageReceived);
+    stompClient.send('/app/topic', {}, JSON.stringify({sender: username, messageType: 'JOIN'}));
     connectingElement.classList.add('hidden');
 }
 
@@ -47,7 +49,7 @@ function sendMessage(event) {
             content: messageInput.value,
             messageType: 'CHAT'
         };
-        stompClient.send('/app/chat/send', {}, JSON.stringify(chatMessage));
+        stompClient.send('/app/topic', {}, JSON.stringify(chatMessage));
         messageInput.value = '';
     }
     event.preventDefault();
