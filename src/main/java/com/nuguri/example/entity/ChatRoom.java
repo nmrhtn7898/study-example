@@ -5,6 +5,7 @@ import lombok.*;
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -16,6 +17,9 @@ public class ChatRoom extends BaseEntity {
     @Id
     @GeneratedValue
     private Long id;
+
+    @Column(unique = true, nullable = false)
+    private String uuid = UUID.randomUUID().toString();
 
     private String name;
 

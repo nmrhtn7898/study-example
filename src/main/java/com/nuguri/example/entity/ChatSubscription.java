@@ -25,6 +25,8 @@ public class ChatSubscription extends BaseEntity {
     public ChatSubscription(ChatRoom chatRoom, Account account) {
         this.chatRoom = chatRoom;
         this.account = account;
+        chatRoom.getSubscriptions().add(this);
+        account.getSubscriptions().add(this);
     }
 
 }

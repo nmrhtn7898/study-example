@@ -33,6 +33,7 @@ public class ChatMessage extends BaseEntity {
         this.chatRoom = chatRoom;
         this.sender = sender;
         this.recipient = recipient;
+        chatRoom.getMessages().add(this);
     }
 
 }
