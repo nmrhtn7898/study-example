@@ -14,11 +14,25 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  devtools:
+    livereload:
+      enabled: true
+    restart:
+      enabled: false
+  thymeleaf:
+    cache: false
 
 logging:
   level:
     org:
+      hibernate:
+        SQL: DEBUG
+        type:
+          descriptor:
+            sql:
+              BasicBinder: TRACE
       springframework:
         messaging:
           simp:
-            user: trace
+            user: TRACE
+        security: DEBUG

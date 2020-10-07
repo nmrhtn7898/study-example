@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.stereotype.Service;
 
 import java.util.stream.Collectors;
@@ -30,9 +31,9 @@ public class AccountService implements UserDetailsService {
                 .password(account.getPassword())
                 .authorities(
                         account
-                                .getAccountRoles()
+                                .getRoles()
                                 .stream()
-                                .map(a -> new SimpleGrantedAuthority(a.getRole().getFullName()))
+                                .map(r -> new SimpleGrantedAuthority(r.getFullName()))
                                 .collect(Collectors.toList())
                 )
                 .build();

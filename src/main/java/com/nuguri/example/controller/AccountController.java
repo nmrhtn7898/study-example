@@ -16,4 +16,9 @@ public class AccountController {
         return "join";
     }
 
+    @RequestMapping("/account/login")
+    public String login() {
+        return "login";
+    }
+
 }
