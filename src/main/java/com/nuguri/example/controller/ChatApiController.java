@@ -1,28 +1,29 @@
 package com.nuguri.example.controller;
 
+import com.nuguri.example.annotation.WebSocketPrincipal;
 import com.nuguri.example.entity.Account;
 import com.nuguri.example.entity.ChatMessage;
 import com.nuguri.example.entity.ChatRoom;
-import com.nuguri.example.entity.ChatSubscription;
 import com.nuguri.example.model.AccountAdapter;
 import com.nuguri.example.model.Message;
+import com.nuguri.example.model.RoomType;
 import com.nuguri.example.repository.ChatMessageRepository;
 import com.nuguri.example.repository.ChatRoomRepository;
 import com.nuguri.example.service.ChatService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
-import org.springframework.messaging.simp.annotation.SendToUser;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.persistence.EntityManager;
-import java.security.Principal;
+import javax.persistence.NoResultException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,31 +36,35 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ChatApiController {
 
-    private final ChatService chatService;
+    private final SimpMessageSendingOperations sendingOperations;
 
     private final ChatMessageRepository chatMessageRepository;
 
-    private final ChatRoomRepository chatRoomRepository;
-
     private final EntityManager entityManager;
 
-    @MessageMapping("/topic")
-    @SendTo("/topic/public")
-    public Message publicMessage(@Payload Message message, @AuthenticationPrincipal AccountAdapter accountAdapter) {
+    @MessageMapping("/topic/{chatRoomId}")
+    public void publicMessage(@Payload Message message, @DestinationVariable Long chatRoomId,
+                              @WebSocketPrincipal AccountAdapter accountAdapter) {
+        try {
+            Integer result = entityManager
+                    .createQuery("SELECT 1 FROM ChatRoom r LEFT JOIN r.subscriptions s WHERE s.account.id = ?1 AND r.id = ?2", Integer.class)
+                    .setParameter(1, accountAdapter.getAccount().getId())
+                    .setParameter(2, chatRoomId)
+                    .setFirstResult(0)
+                    .setMaxResults(1)
+                    .getSingleResult();
+        } catch (NoResultException e) {
+            return; // 메서지 전송 실패 처리
+        }
         ChatMessage chatMessage = ChatMessage
                 .builder()
                 .content(message.getContent())
                 .chatRoom(message.getChatRoom())
                 .sender(accountAdapter.getAccount())
-                .recipient(message.getRecipient())
                 .build();
-        return message;
-    }
-
-    @MessageMapping("/queue")
-    @SendToUser("/queue/direct")
-    public Message directMessage(@Payload Message message, SimpMessageHeaderAccessor headerAccessor) {
-        return message;
+        chatMessageRepository.save(chatMessage);
+        message.setAccount(accountAdapter.getAccount());
+        sendingOperations.convertAndSend("/subscribe/topic/" + chatRoomId, message);
     }
 
     @GetMapping("/api/v1/chatroom")
@@ -76,13 +81,16 @@ public class ChatApiController {
 
     @Data
     public static class ChatRoomResponse {
-        private String uuid;
+        private Long id;
         private String name;
+        private RoomType roomType;
         private List<AccountResponse> members;
         private List<ChatMessageResponse> messages;
+
         public ChatRoomResponse(ChatRoom chatRoom) {
-            this.uuid = chatRoom.getUuid();
+            this.id = chatRoom.getId();
             this.name = chatRoom.getName();
+            this.roomType = chatRoom.getRoomType();
             this.members = chatRoom
                     .getSubscriptions()
                     .stream()
@@ -100,11 +108,12 @@ public class ChatApiController {
     public static class ChatMessageResponse {
         private String content;
         private AccountResponse sender;
-        private AccountResponse recipient;
+        private LocalDateTime timeStamp;
+
         public ChatMessageResponse(ChatMessage chatMessage) {
             this.content = chatMessage.getContent();
             this.sender = new AccountResponse(chatMessage.getSender());
-            this.recipient = new AccountResponse(chatMessage.getRecipient());
+            this.timeStamp = chatMessage.getCreated();
         }
     }
 
@@ -114,6 +123,7 @@ public class ChatApiController {
         private String email;
         private String nickname;
         private String profileImage;
+
         public AccountResponse(Account account) {
             this.id = account.getId();
             this.email = account.getEmail();

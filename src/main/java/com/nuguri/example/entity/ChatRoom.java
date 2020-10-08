@@ -1,16 +1,16 @@
 package com.nuguri.example.entity;
 
+import com.nuguri.example.model.RoomType;
 import lombok.*;
 
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 @EqualsAndHashCode(of = "id", callSuper = false)
 public class ChatRoom extends BaseEntity {
 
@@ -18,20 +18,22 @@ public class ChatRoom extends BaseEntity {
     @GeneratedValue
     private Long id;
 
-    @Column(unique = true, nullable = false)
-    private String uuid = UUID.randomUUID().toString();
-
     private String name;
+
+    @Enumerated(EnumType.STRING)
+    private RoomType roomType;
 
     @OneToMany(mappedBy = "chatRoom", fetch = FetchType.LAZY)
     private List<ChatSubscription> subscriptions = new ArrayList<>();
 
+    @OrderBy("created asc")
     @OneToMany(mappedBy = "chatRoom", fetch = FetchType.LAZY)
     private List<ChatMessage> messages = new ArrayList<>();
 
     @Builder
-    public ChatRoom(String name) {
+    public ChatRoom(String name, RoomType roomType) {
         this.name = name;
+        this.roomType = roomType;
     }
 
 }

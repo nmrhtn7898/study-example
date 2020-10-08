@@ -4,12 +4,14 @@ import com.nuguri.example.entity.Account;
 import com.nuguri.example.entity.ChatRoom;
 import com.nuguri.example.entity.ChatSubscription;
 import com.nuguri.example.model.Role;
+import com.nuguri.example.model.RoomType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyUtils;
@@ -28,6 +30,7 @@ import java.util.Map;
 
 @EnableWebSecurity
 @EnableWebSocketMessageBroker
+@EnableJpaAuditing
 @SpringBootApplication
 @RequiredArgsConstructor
 public class ExampleApplication {
@@ -66,6 +69,7 @@ public class ExampleApplication {
                     .nickname("유저")
                     .password(passwordEncoder.encode("1234"))
                     .roles(Collections.singletonList(Role.USER))
+                    .profileImage("https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRo2s5FzdZZhH7o5Ylzyc88y4lW1HmW-khXIQ&usqp=CAU")
                     .build();
             Account admin = Account
                     .builder()
@@ -73,12 +77,14 @@ public class ExampleApplication {
                     .nickname("관리자")
                     .password(passwordEncoder.encode("1234"))
                     .roles(Collections.singletonList(Role.ADMIN))
+                    .profileImage("https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRh9nDTzbOiZQsJ99PmLuHsBwV2h_zdofEgLA&usqp=CAU")
                     .build();
             entityManager.persist(user);
             entityManager.persist(admin);
             ChatRoom chatRoom = ChatRoom
                     .builder()
                     .name("유저와 관리자의 채팅방")
+                    .roomType(RoomType.DIRECT)
                     .build();
             entityManager.persist(chatRoom);
             ChatSubscription subscription = ChatSubscription

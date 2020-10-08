@@ -24,7 +24,7 @@
     <div id="sidepanel">
         <div id="profile">
             <div class="wrap">
-                <img id="profile-img" src="http://emilcarlsson.se/assets/mikeross.png" class="online" alt="" />
+                <img id="profile-img" th:src="${#authentication.principal.profileImage}" class="online" alt="" />
                 <p sec:authentication="principal.nickname">닉네임</p>
                 <i class="fa fa-chevron-down expand-button" aria-hidden="true"></i>
                 <div id="status-options">
@@ -50,18 +50,9 @@
             <input type="text" placeholder="Search contacts..." />
         </div>
 
+        <!--/* 좌측 채팅 목록 */-->
         <div id="contacts">
-            <ul>
-                <li class="contact active">
-                    <div class="wrap">
-                        <span class="contact-status busy"></span>
-                        <img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="" />
-                        <div class="meta">
-                            <p class="name">Harvey Specter</p>
-                            <p class="preview">Wrong. You take the gun, or you pull out a bigger one. Or, you call their bluff. Or, you do any one of a hundred and forty six other things.</p>
-                        </div>
-                    </div>
-                </li>
+            <ul id="room-list-wrap">
             </ul>
         </div>
 
@@ -69,24 +60,56 @@
             <button id="addcontact"><i class="fa fa-user-plus fa-fw" aria-hidden="true"></i> <span>친구추가</span></button>
             <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>설정</span></button>
         </div>
-
     </div>
 
     <!--/* 채팅 탭 */-->
+    <div id="content-wrap">
+    </div>
+
+</div>
+<script src='//production-assets.codepen.io/assets/common/stopExecutionOnTimeout-b2a7b3fe212eaa732349046d8416e00a9dec26eb7fd347590fbced3ab38af52e.js'></script>
+<script src='https://code.jquery.com/jquery-2.2.4.min.js'></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+<script type="text/html" id="room-list">
+    <li class="contact {active}" data-room-id={id}>
+        <div class="wrap">
+            <span class="contact-status {status}"></span>
+            <img src="{profileImage}" alt="" />
+            <div class="meta">
+                <p class="name">{name}</p>
+                <p class="preview">{content}</p>
+            </div>
+        </div>
+    </li>
+</script>
+
+<script type="text/html" id="message-list">
+    <li class="{status}">
+        <img src="{profileImage}" alt="" />
+        <p>{message}</p>
+    </li>
+</script>
+
+<script type="text/html" id="content-list">
     <div class="content">
         <div class="contact-profile">
-            <img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="" />
-            <p>상대방 이름</p>
+            <img src="{profileImage}" alt="" />
+            <p>{name}</p>
             <div class="social-media">
                 <i class="fa fa-facebook" aria-hidden="true"></i>
                 <i class="fa fa-twitter" aria-hidden="true"></i>
                 <i class="fa fa-instagram" aria-hidden="true"></i>
             </div>
         </div>
+
         <div class="messages">
             <ul>
+                {messages}
             </ul>
         </div>
+
         <div class="message-input">
             <div class="wrap">
                 <input type="text" placeholder="메시지를 작성하세요..." />
@@ -97,15 +120,12 @@
             </div>
         </div>
     </div>
+</script>
 
-</div>
-<script src='//production-assets.codepen.io/assets/common/stopExecutionOnTimeout-b2a7b3fe212eaa732349046d8416e00a9dec26eb7fd347590fbced3ab38af52e.js'></script>
-<script src='https://code.jquery.com/jquery-2.2.4.min.js'></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 <script>
-const messageInput = document.querySelector('.message-input input');
-const username = 'test';
+const userId = [[${#authentication.principal.id}]];
+const email = '[[${#authentication.principal.email}]]';
+const nickname = '[[${#authentication.principal.nickname}]]';
 
 $(".messages").animate({ scrollTop: $(document).height() }, "fast");
 $("#profile-img").click(function() {
@@ -138,27 +158,26 @@ $("#status-options ul li").click(function() {
 	$("#status-options").removeClass("active");
 });
 
-function onConnected() {
-    stompClient.subscribe('/topic/public', onMessageReceived);
-    stompClient.send('/app/topic', {}, JSON.stringify({sender: username, messageType: 'JOIN'}));
-}
-
-function onError(error) {
-    alert('error!');
-}
-
 function sendMessage() {
+    const roomId = document.querySelector('li.contact').dataset['roomId'];
+    const messageInput = document.querySelector('.message-input input');
     const message = messageInput.value.trim();
     if (message && stompClient) {
         const message = {
-            sender: username,
+            messageType: 'CHAT',
             content: messageInput.value,
-            messageType: 'CHAT'
+            chatRoom: {
+                id: roomId
+            }
         };
-        stompClient.send('/app/topic', {}, JSON.stringify(message));
+        stompClient.send(`/publish/topic/${roomId}`, {}, JSON.stringify(message));
         messageInput.value = '';
     }
 };
+
+function scrollBottom() {
+    $(".messages").animate({ scrollTop: 99999999999999999999999999999999 });
+}
 
 function onMessageReceived(payload) {
     const message = JSON.parse(payload.body);
@@ -167,31 +186,65 @@ function onMessageReceived(payload) {
     } else if (message.messageType === 'LEAVE') {
         message.content = message.sender + ' 님이 채팅을 나가셨습니다.';
     }
-    $('<li class="sent"><img src="http://emilcarlsson.se/assets/mikeross.png" alt="" /><p>' + message.content + '</p></li>').appendTo($('.messages ul'));
+    const status = message.sender.id === userId ? 'sent' : 'replies';
+    const profileImage = message.sender.profileImage;
+    $(`<li class="${status}"><img src="${profileImage}" alt="" /><p>` + message.content + '</p></li>').appendTo($('.messages ul'));
 	$('.contact.active .preview').html('<span>You: </span>' + message.content);
-	$(".messages").animate({ scrollTop: $(document).height() }, "fast");
+	scrollBottom();
 }
 
-document.querySelector('.submit').addEventListener('click', sendMessage);
-window.addEventListener('keydown', function(e) {
+document.addEventListener('click', e => {
+    if (e.target && e.target.classList.contains('submit')) {
+        sendMessage();
+        document.querySelector('.message-input input').focus();
+    }
+})
+window.addEventListener('keydown', e => {
     if (e.which == 13) {
         sendMessage();
         return false;
     }
 });
 
-const socket = new SockJS('/ws');
-stompClient = Stomp.over(socket);
-stompClient.connect({login:"foo", custom:"test"}, onConnected, onError);
-
-function getChatRoomList() {
+function onConnected() {
     $.ajax({
         url: '/api/v1/chatroom',
         type: 'get',
-        dataType: 'json',
         success: function(data) {
-            const html = document.querySelector('#room-list').innerHtml;
-            html.replace('{name}', data.members.map(function(member) { return member.nickname; }).join(','));
+            const promise = new Promise((resolve, reject) => {
+                data.forEach(element => stompClient.subscribe(`/subscribe/topic/${element.id}`, onMessageReceived))
+                resolve();
+            }).then(data => console.log('connect chat room websocket connection success'));
+            const roomListTemplate = document.querySelector('#room-list').innerHTML;
+            const contentListTemplate = document.querySelector('#content-list').innerHTML;
+            const messageListTemplate = document.querySelector('#message-list').innerHTML;
+            let roomListHtml = '';
+            let contentListHtml = '';
+            let messageListHtml = '';
+            data.forEach(element => {
+                const members = element.members.filter(member => member.nickname !== nickname);
+                const profileImage = element.roomType === 'DIRECT' ? members[0].profileImage : '여러명 이미지 합친거';
+                roomListHtml += roomListTemplate
+                        .replace('{name}', members.map(member => member.nickname).join(', '))
+                        .replace('{profileImage}', profileImage)
+                        .replace('{content}', element.messages.length > 0 ? element.messages[element.messages.length - 1].content : '')
+                        .replace('{id}', element.id)
+                        .replace('{active}', 'active')
+                        .replace('{status}', 'online');
+                element.messages.forEach(message => {
+                    messageListHtml += messageListTemplate
+                                                            .replace('{message}', message.content)
+                                                            .replace('{profileImage}', message.sender.profileImage)
+                                                            .replace('{status}', message.sender.id === userId ? 'sent' : 'replies');
+                });
+                contentListHtml += contentListTemplate
+                                                        .replace('{messages}', messageListHtml)
+                                                        .replace('{profileImage}', profileImage)
+                                                        .replace('{name}', '상대방 아이디');
+            });
+            document.querySelector('#room-list-wrap').innerHTML = roomListHtml;
+            document.querySelector('#content-wrap').innerHTML = contentListHtml;
+            scrollBottom();
         },
         error: function(error) {
             alert(error);
@@ -199,19 +252,9 @@ function getChatRoomList() {
     });
 }
 
-getChatRoomList();
+const socket = new SockJS('/ws');
+stompClient = Stomp.over(socket);
+stompClient.connect({}, onConnected, error => alert(error));
 
-</script>
-<script type="text/html" id="room-list">
-    <li class="contact">
-        <div class="wrap">
-            <span class="contact-status busy"></span>
-            <img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="" />
-            <div class="meta">
-                <p class="name">{name}</p>
-                <p class="preview">{content}</p>
-            </div>
-        </div>
-    </li>
 </script>
 </body></html>

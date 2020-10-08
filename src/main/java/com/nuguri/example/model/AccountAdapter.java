@@ -2,6 +2,7 @@ package com.nuguri.example.model;
 
 import com.nuguri.example.entity.Account;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
@@ -25,12 +26,20 @@ public class AccountAdapter extends User {
         this.account = account;
     }
 
+    public Long getId() {
+        return account.getId();
+    }
+
     public String getEmail() {
         return account.getEmail();
     }
 
     public String getNickname() {
         return account.getNickname();
+    }
+
+    public String getProfileImage() {
+        return account.getProfileImage();
     }
 
 }

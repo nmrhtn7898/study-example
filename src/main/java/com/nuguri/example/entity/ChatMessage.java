@@ -3,7 +3,6 @@ package com.nuguri.example.entity;
 import lombok.*;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -24,15 +23,11 @@ public class ChatMessage extends BaseEntity {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private Account sender;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    private Account recipient;
-
     @Builder
-    public ChatMessage(String content, ChatRoom chatRoom, Account sender, Account recipient) {
+    public ChatMessage(String content, ChatRoom chatRoom, Account sender) {
         this.content = content;
         this.chatRoom = chatRoom;
         this.sender = sender;
-        this.recipient = recipient;
         chatRoom.getMessages().add(this);
     }
 

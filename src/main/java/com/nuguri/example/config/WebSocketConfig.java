@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.handler.invocation.HandlerMethodArgumentResolver;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
@@ -15,6 +16,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
 import java.security.Principal;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,6 +24,11 @@ import java.util.Map;
  */
 @Configuration
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    @Override
+    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
+        argumentResolvers.add(new WebSocketPrincipalResolver());
+    }
 
     /**
      * 클라이언트가 웹 소켓 서버에 연결하는 엔드 포인트를 등록
@@ -34,12 +41,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry
                 .addEndpoint("/ws")
-                .setHandshakeHandler(new DefaultHandshakeHandler() {
-                    @Override
-                    protected Principal determineUser(ServerHttpRequest request, WebSocketHandler wsHandler, Map<String, Object> attributes) {
-                        return super.determineUser(request, wsHandler, attributes);
-                    }
-                })
                 .setAllowedOrigins("*")
                 .withSockJS();
     }
@@ -64,8 +65,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry
-                .setApplicationDestinationPrefixes("/app")
-                .enableSimpleBroker("/topic", "/queue");
+                .setApplicationDestinationPrefixes("/publish")
+                .enableSimpleBroker("/subscribe");
     }
 
 }
