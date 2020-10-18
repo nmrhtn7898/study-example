@@ -127,7 +127,6 @@ const userId = [[${#authentication.principal.id}]];
 const email = '[[${#authentication.principal.email}]]';
 const nickname = '[[${#authentication.principal.nickname}]]';
 
-$(".messages").animate({ scrollTop: $(document).height() }, "fast");
 $("#profile-img").click(function() {
 	$("#status-options").toggleClass("active");
 });
@@ -181,6 +180,8 @@ function scrollBottom() {
 
 function onMessageReceived(payload) {
     const message = JSON.parse(payload.body);
+    const messageListTemplate = document.querySelector('#message-list').innerHTML;
+    let messageListHtml = '';
     if (message.messageType === 'JOIN') {
         message.content = message.sender + ' 님이 채팅에 참여하셨습니다.';
     } else if (message.messageType === 'LEAVE') {
@@ -188,8 +189,11 @@ function onMessageReceived(payload) {
     }
     const status = message.sender.id === userId ? 'sent' : 'replies';
     const profileImage = message.sender.profileImage;
-    $(`<li class="${status}"><img src="${profileImage}" alt="" /><p>` + message.content + '</p></li>').appendTo($('.messages ul'));
-	$('.contact.active .preview').html('<span>You: </span>' + message.content);
+    document.querySelector('.messages ul').innerHTML += messageListTemplate
+                        .replace('{message}', message.content)
+                        .replace('{profileImage}', message.sender.profileImage)
+                        .replace('{status}', message.sender.id === userId ? 'sent' : 'replies');
+    document.querySelector('contact.active .priview').innerHTML = `<span>${status}: </span>${message.content}`;
 	scrollBottom();
 }
 
