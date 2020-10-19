@@ -8,8 +8,6 @@ import com.nuguri.example.model.AccountAdapter;
 import com.nuguri.example.model.Message;
 import com.nuguri.example.model.RoomType;
 import com.nuguri.example.repository.ChatMessageRepository;
-import com.nuguri.example.repository.ChatRoomRepository;
-import com.nuguri.example.service.ChatService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,15 +20,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * MessageMapping 애노테이션이 붙은 핸들러는 WebSocketConfig
- * setApplicationDestinationPrefixes("/app") 로 설정한 접두어 app 붙은 경로로 접근하게 된다.
- * ex) app/chat/send, app/chat/add
+ * setApplicationDestinationPrefixes("/publish") 로 설정한 접두어 app 붙은 경로로 접근하게 된다.
+ * ex) publish/topic/1, publish/topic/2
+ * enableSimpleBroker("/subscribe") 로 설정한 접두어 subscribe 붙은 경로로 destination 구독 접근하게 된다.
+ * ex) subscribe/topic/1, subscribe/**
  */
 @RestController
 @RequiredArgsConstructor
@@ -45,17 +44,6 @@ public class ChatApiController {
     @MessageMapping("/topic/{chatRoomId}")
     public void publicMessage(@Payload Message message, @DestinationVariable Long chatRoomId,
                               @WebSocketPrincipal AccountAdapter accountAdapter) {
-        try {
-            Integer result = entityManager
-                    .createQuery("SELECT 1 FROM ChatRoom r LEFT JOIN r.subscriptions s WHERE s.account.id = ?1 AND r.id = ?2", Integer.class)
-                    .setParameter(1, accountAdapter.getAccount().getId())
-                    .setParameter(2, chatRoomId)
-                    .setFirstResult(0)
-                    .setMaxResults(1)
-                    .getSingleResult();
-        } catch (NoResultException e) {
-            return; // 메서지 전송 실패 처리
-        }
         ChatMessage chatMessage = ChatMessage
                 .builder()
                 .content(message.getContent())
@@ -70,12 +58,26 @@ public class ChatApiController {
     @GetMapping("/api/v1/chatroom")
     public ResponseEntity queryChatRoom(@AuthenticationPrincipal AccountAdapter accountAdapter) {
         List<ChatRoomResponse> chatRooms = entityManager
-                .createQuery("select r from ChatRoom r join fetch r.subscriptions s join fetch s.account a where r.id in " +
+                .createQuery("select distinct r from ChatRoom r join fetch r.subscriptions s join fetch s.account a where r.id in " +
                         "(select r.id from ChatRoom r where exists (select 1 from r.subscriptions s where s.account.id = ?1))", ChatRoom.class)
                 .setParameter(1, accountAdapter.getAccount().getId())
                 .getResultStream()
                 .map(ChatRoomResponse::new)
-                .collect(Collectors.toList());
+                .sorted((a, b) -> {
+                    List<ChatMessageResponse> m = a.getMessages();
+                    List<ChatMessageResponse> m2 = b.getMessages();
+                    if (m.isEmpty() && !m2.isEmpty()) {
+                        return 1;
+                    } else if (!m.isEmpty() && m2.isEmpty()) {
+                        return -1;
+                    } else if (m.isEmpty()) {
+                        return 0;
+                    } else if (m.get(m.size() - 1).getTimeStamp().isBefore(m2.get(m2.size() - 1).getTimeStamp())) {
+                        return 1;
+                    } else {
+                        return -1;
+                    }
+                }).collect(Collectors.toList());
         return ResponseEntity.ok(chatRooms);
     }
 

@@ -1,6 +1,6 @@
+<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
 <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
 <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
-<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
@@ -12,19 +12,16 @@
     <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,700,300' rel='stylesheet' type='text/css'>
     <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css'>
     <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.2/css/font-awesome.min.css'>
-    <link rel="stylesheet" href="/css/index.css">
-    <script src='//production-assets.codepen.io/assets/editor/live/console_runner-079c09a0e3b9ff743e39ee2d5637b9216b3545af0de366d4b9aad9dc87e26bfd.js'></script>
-    <script src='//production-assets.codepen.io/assets/editor/live/events_runner-73716630c22bbc8cff4bd0f07b135f00a0bdc5d14629260c3ec49e5606f98fdd.js'></script>
-    <script src='//production-assets.codepen.io/assets/editor/live/css_live_reload_init-2c0dc5167d60a5af3ee189d570b1835129687ea2a61bee3513dee3a50c115a77.js'></script>
     <script src="https://use.typekit.net/hoy3lrg.js"></script>
     <script>try{Typekit.load({ async: true });}catch(e){}</script>
+    <link rel="stylesheet" href="/css/index.css">
 </head><body>
 
 <div id="frame">
     <div id="sidepanel">
         <div id="profile">
             <div class="wrap">
-                <img id="profile-img" th:src="${#authentication.principal.profileImage}" class="online" alt="" />
+                <img id="profile-img" th:src="${#authentication.principal.profileImage}" class="online" alt=""/>
                 <p sec:authentication="principal.nickname">닉네임</p>
                 <i class="fa fa-chevron-down expand-button" aria-hidden="true"></i>
                 <div id="status-options">
@@ -57,7 +54,7 @@
         </div>
 
         <div id="bottom-bar">
-            <button id="addcontact"><i class="fa fa-user-plus fa-fw" aria-hidden="true"></i> <span>친구추가</span></button>
+            <button id="addcontact"><i class="fa fa-user-plus fa-fw" aria-hidden="true"></i> <span>대화추가</span></button>
             <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>설정</span></button>
         </div>
     </div>
@@ -73,10 +70,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 
 <script type="text/html" id="room-list">
-    <li class="contact {active}" data-room-id={id}>
+    <li class="contact room{id} {active}" data-room-id={id}>
         <div class="wrap">
             <span class="contact-status {status}"></span>
-            <img src="{profileImage}" alt="" />
+            <img src="{profileImage}" alt=""/>
             <div class="meta">
                 <p class="name">{name}</p>
                 <p class="preview">{content}</p>
@@ -87,15 +84,15 @@
 
 <script type="text/html" id="message-list">
     <li class="{status}">
-        <img src="{profileImage}" alt="" />
+        <img src="{profileImage}" alt=""/>
         <p>{message}</p>
     </li>
 </script>
 
 <script type="text/html" id="content-list">
-    <div class="content">
+    <div class="content room{id}" {style}>
         <div class="contact-profile">
-            <img src="{profileImage}" alt="" />
+            <img src="{profileImage}" alt=""/>
             <p>{name}</p>
             <div class="social-media">
                 <i class="fa fa-facebook" aria-hidden="true"></i>
@@ -112,7 +109,8 @@
 
         <div class="message-input">
             <div class="wrap">
-                <input type="text" placeholder="메시지를 작성하세요..." />
+                <input type="text" placeholder="메시지를 작성하세요..."/>
+                <input type="file" multiple id="file" style="display: none;"/>
                 <i class="fa fa-paperclip attachment" aria-hidden="true"></i>
                 <button class="submit">
                     <i class="fa fa-paper-plane" aria-hidden="true"></i>
@@ -127,39 +125,44 @@ const userId = [[${#authentication.principal.id}]];
 const email = '[[${#authentication.principal.email}]]';
 const nickname = '[[${#authentication.principal.nickname}]]';
 
-$("#profile-img").click(function() {
-	$("#status-options").toggleClass("active");
+document.querySelector('#profile-img').addEventListener('click', () => document.querySelector('#status-options').classList.toggle('active'));
+document.querySelector('.expand-button').addEventListener('click', () => {
+    document.querySelector('#profile').classList.toggle('expanded');
+    document.querySelector('#contacts').classList.toggle('expanded');
 });
+document.querySelectorAll('#status-options ul li').forEach(element =>
+    element.addEventListener('click', e => {
+        const profileImg = document.querySelector('#profile-img');
+        const statusOnline = document.querySelector('#status-online');
+        const statusAway = document.querySelector('#status-away');
+        const statusBusy = document.querySelector('#status-busy');
+        const statusOffline = document.querySelector('#status-offline');
+        profileImg.className = '';
+        statusOnline.classList.remove('active');
+        statusAway.classList.remove('active');
+        statusBusy.classList.remove('active');
+        statusOffline.classList.remove('active');
+        e.target.classList.add('active');
 
-$(".expand-button").click(function() {
-  $("#profile").toggleClass("expanded");
-	$("#contacts").toggleClass("expanded");
-});
+        if(statusOnline.classList.contains('active')) {
+            profileImg.classList.add('online');
+        } else if (statusAway.classList.contains('active')) {
+            profileImg.classList.add('away');
+        } else if (statusBusy.classList.contains('active')) {
+            profileImg.classList.add('busy');
+        } else if (statusOffline.classList.contains('active')) {
+            profileImg.classList.add('offline');
+        } else {
+            profileImg.className = '';
+        };
+        document.querySelector('#status-options').classList.remove('active');
+    })
+);
 
-$("#status-options ul li").click(function() {
-	$("#profile-img").removeClass();
-	$("#status-online").removeClass("active");
-	$("#status-away").removeClass("active");
-	$("#status-busy").removeClass("active");
-	$("#status-offline").removeClass("active");
-	$(this).addClass("active");
-	if($("#status-online").hasClass("active")) {
-		$("#profile-img").addClass("online");
-	} else if ($("#status-away").hasClass("active")) {
-		$("#profile-img").addClass("away");
-	} else if ($("#status-busy").hasClass("active")) {
-		$("#profile-img").addClass("busy");
-	} else if ($("#status-offline").hasClass("active")) {
-		$("#profile-img").addClass("offline");
-	} else {
-		$("#profile-img").removeClass();
-	};
-	$("#status-options").removeClass("active");
-});
 
 function sendMessage() {
-    const roomId = document.querySelector('li.contact').dataset['roomId'];
-    const messageInput = document.querySelector('.message-input input');
+    const roomId = document.querySelector('li.contact.active').dataset['roomId'];
+    const messageInput = document.querySelector(`.content.room${roomId} .message-input input`);
     const message = messageInput.value.trim();
     if (message && stompClient) {
         const message = {
@@ -180,7 +183,7 @@ function scrollBottom() {
 
 function onMessageReceived(payload) {
     const message = JSON.parse(payload.body);
-    const messageListTemplate = document.querySelector('#message-list').innerHTML;
+    const messageListTemplate = document.querySelector(`#message-list`).innerHTML;
     let messageListHtml = '';
     if (message.messageType === 'JOIN') {
         message.content = message.sender + ' 님이 채팅에 참여하셨습니다.';
@@ -189,20 +192,39 @@ function onMessageReceived(payload) {
     }
     const status = message.sender.id === userId ? 'sent' : 'replies';
     const profileImage = message.sender.profileImage;
-    document.querySelector('.messages ul').innerHTML += messageListTemplate
+    document.querySelector(`.content.room${message.chatRoom.id} .messages ul`).innerHTML += messageListTemplate
                         .replace('{message}', message.content)
                         .replace('{profileImage}', message.sender.profileImage)
                         .replace('{status}', message.sender.id === userId ? 'sent' : 'replies');
-    document.querySelector('contact.active .priview').innerHTML = `<span>${status}: </span>${message.content}`;
+    document.querySelector(`.contact.room${message.chatRoom.id} .preview`).innerHTML = `<span>${status}: </span>${message.content}`;
 	scrollBottom();
 }
 
-document.addEventListener('click', e => {
-    if (e.target && e.target.classList.contains('submit')) {
-        sendMessage();
-        document.querySelector('.message-input input').focus();
-    }
-})
+function addChatRoomListener() {
+    document.querySelectorAll('.submit').forEach(element => {
+        element.addEventListener('click', e => {
+            sendMessage();
+            const roomId = document.querySelector('li.contact.active').dataset['roomId'];
+            document.querySelector(`.content.room${roomId} .message-input input`).focus();
+        });
+    });
+    document.querySelectorAll('.contact').forEach(element => {
+        element.addEventListener('click', e => {
+            document.querySelector('.contact.active').classList.remove('active');
+            e.target.closest('.contact').classList.add('active');
+            const roomId = document.querySelector('li.contact.active').dataset['roomId'];
+            document.querySelectorAll('.content').forEach(element => element.style.display = element.classList.contains(`room${roomId}`) ? '' : 'none');
+            scrollBottom();
+        });
+    });
+    document.querySelectorAll('.attachment').forEach(element => {
+        element.addEventListener('click', e => {
+            const roomId = document.querySelector('li.contact.active').dataset['roomId'];
+            document.querySelector(`.content.room${roomId}`).querySelector('input[type=file]').click();
+        });
+    });
+}
+
 window.addEventListener('keydown', e => {
     if (e.which == 13) {
         sendMessage();
@@ -219,21 +241,24 @@ function onConnected() {
                 data.forEach(element => stompClient.subscribe(`/subscribe/topic/${element.id}`, onMessageReceived))
                 resolve();
             }).then(data => console.log('connect chat room websocket connection success'));
-            const roomListTemplate = document.querySelector('#room-list').innerHTML;
-            const contentListTemplate = document.querySelector('#content-list').innerHTML;
-            const messageListTemplate = document.querySelector('#message-list').innerHTML;
-            let roomListHtml = '';
-            let contentListHtml = '';
-            let messageListHtml = '';
-            data.forEach(element => {
+            data.forEach((element, index) => {
+                const roomListTemplate = document.querySelector('#room-list').innerHTML;
+                const contentListTemplate = document.querySelector('#content-list').innerHTML;
+                const messageListTemplate = document.querySelector('#message-list').innerHTML;
+                let roomListHtml = '';
+                let contentListHtml = '';
+                let messageListHtml = '';
+                const isActiveChatRoom = index === 0;
                 const members = element.members.filter(member => member.nickname !== nickname);
+                const memberNames = members.map(member => member.nickname).join(', ');
                 const profileImage = element.roomType === 'DIRECT' ? members[0].profileImage : '여러명 이미지 합친거';
                 roomListHtml += roomListTemplate
-                        .replace('{name}', members.map(member => member.nickname).join(', '))
+                        .replace('{name}', memberNames)
                         .replace('{profileImage}', profileImage)
-                        .replace('{content}', element.messages.length > 0 ? element.messages[element.messages.length - 1].content : '')
-                        .replace('{id}', element.id)
-                        .replace('{active}', 'active')
+                        .replace('{content}', element.messages.length > 0 ?
+                            `<span>${element.messages[element.messages.length - 1].sender.id === userId ? 'sent' : 'replies'}: </span>${element.messages[element.messages.length - 1].content}` : '')
+                        .replaceAll('{id}', element.id)
+                        .replace('{active}', isActiveChatRoom ? 'active' : '')
                         .replace('{status}', 'online');
                 element.messages.forEach(message => {
                     messageListHtml += messageListTemplate
@@ -242,13 +267,16 @@ function onConnected() {
                                                             .replace('{status}', message.sender.id === userId ? 'sent' : 'replies');
                 });
                 contentListHtml += contentListTemplate
+                                                        .replace('{id}', element.id)
+                                                        .replace('{style}', isActiveChatRoom ? '' : "style='display: none;'")
                                                         .replace('{messages}', messageListHtml)
                                                         .replace('{profileImage}', profileImage)
-                                                        .replace('{name}', '상대방 아이디');
+                                                        .replace('{name}', memberNames);
+                document.querySelector('#room-list-wrap').innerHTML += roomListHtml;
+                document.querySelector('#content-wrap').innerHTML += contentListHtml;
             });
-            document.querySelector('#room-list-wrap').innerHTML = roomListHtml;
-            document.querySelector('#content-wrap').innerHTML = contentListHtml;
             scrollBottom();
+            addChatRoomListener();
         },
         error: function(error) {
             alert(error);

@@ -79,14 +79,29 @@ public class ExampleApplication {
                     .roles(Collections.singletonList(Role.ADMIN))
                     .profileImage("https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRh9nDTzbOiZQsJ99PmLuHsBwV2h_zdofEgLA&usqp=CAU")
                     .build();
+            Account testUser = Account
+                    .builder()
+                    .email("test@naver.com")
+                    .nickname("테스트계정")
+                    .password(passwordEncoder.encode("1234"))
+                    .roles(Collections.singletonList(Role.USER))
+                    .profileImage("https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcR-J7QBqEmjThk60iOR_DvL3hjM3MPTub1Ezw&usqp=CAU")
+                    .build();
             entityManager.persist(user);
             entityManager.persist(admin);
+            entityManager.persist(testUser);
             ChatRoom chatRoom = ChatRoom
                     .builder()
                     .name("유저와 관리자의 채팅방")
                     .roomType(RoomType.DIRECT)
                     .build();
+            ChatRoom chatRoom2 = ChatRoom
+                    .builder()
+                    .name("유저와 테스트유저의 테스트 채팅방")
+                    .roomType(RoomType.DIRECT)
+                    .build();
             entityManager.persist(chatRoom);
+            entityManager.persist(chatRoom2);
             ChatSubscription subscription = ChatSubscription
                     .builder()
                     .account(user)
@@ -97,8 +112,20 @@ public class ExampleApplication {
                     .account(admin)
                     .chatRoom(chatRoom)
                     .build();
+            ChatSubscription subscription3 = ChatSubscription
+                    .builder()
+                    .account(user)
+                    .chatRoom(chatRoom2)
+                    .build();
+            ChatSubscription subscription4 = ChatSubscription
+                    .builder()
+                    .account(testUser)
+                    .chatRoom(chatRoom2)
+                    .build();
             entityManager.persist(subscription);
             entityManager.persist(subscription2);
+            entityManager.persist(subscription3);
+            entityManager.persist(subscription4);
         }
 
     }
