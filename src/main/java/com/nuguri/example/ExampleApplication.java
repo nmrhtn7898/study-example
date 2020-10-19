@@ -5,6 +5,7 @@ import com.nuguri.example.entity.ChatRoom;
 import com.nuguri.example.entity.ChatSubscription;
 import com.nuguri.example.model.Role;
 import com.nuguri.example.model.RoomType;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -39,6 +40,11 @@ public class ExampleApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(ExampleApplication.class, args);
+    }
+
+    @Bean
+    public JPAQueryFactory jpaQueryFactory() {
+        return new JPAQueryFactory(entityManager);
     }
 
     @Bean

@@ -5,6 +5,7 @@ import com.nuguri.example.model.AccountAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.handler.invocation.HandlerMethodArgumentResolver;
@@ -14,13 +15,19 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.AntPathMatcher;
+import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.server.support.AbstractHandshakeHandler;
+import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
+import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 웹 소켓 커넥션 설정
@@ -48,6 +55,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry
                 .addEndpoint("/ws")
+                .setHandshakeHandler(new DefaultHandshakeHandler() { // 해당 추상 클래스에서 웹소켓 연결을 위한 핸드쉐이크시 시큐리티 인증 유저 객체를 설정
+                    @Override
+                    protected Principal determineUser(ServerHttpRequest request, WebSocketHandler wsHandler, Map<String, Object> attributes) {
+                        AccountAdapter accountAdapter = (AccountAdapter) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+                        log.info("{}({}) 님이 채팅 서버에 접속하였습니다.", accountAdapter.getEmail(), accountAdapter.getNickname());
+                        return request.getPrincipal();
+                    }
+                })
                 .setAllowedOrigins("*")
                 .withSockJS();
     }

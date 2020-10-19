@@ -33,18 +33,18 @@
                     </ul>
                 </div>
                 <div id="expanded">
-                    <label for="twitter"><i class="fa fa-facebook fa-fw" aria-hidden="true"></i></label>
-                    <input name="twitter" type="text" value="mikeross" />
+                    <label for="facebook"><i class="fa fa-facebook fa-fw" aria-hidden="true"></i></label>
+                    <input name="facebook" type="text" value="mikeross" />
                     <label for="twitter"><i class="fa fa-twitter fa-fw" aria-hidden="true"></i></label>
                     <input name="twitter" type="text" value="ross81" />
-                    <label for="twitter"><i class="fa fa-instagram fa-fw" aria-hidden="true"></i></label>
-                    <input name="twitter" type="text" value="mike.ross" />
+                    <label for="insta"><i class="fa fa-instagram fa-fw" aria-hidden="true"></i></label>
+                    <input name="insta" type="text" value="mike.ross" />
                 </div>
             </div>
         </div>
         <div id="search">
-            <label for=""><i class="fa fa-search" aria-hidden="true"></i></label>
-            <input type="text" placeholder="Search contacts..." />
+            <label for="search"><i class="fa fa-search" aria-hidden="true"></i></label>
+            <input type="text" name="search" placeholder="검색..." />
         </div>
 
         <!--/* 좌측 채팅 목록 */-->
@@ -109,7 +109,7 @@
 
         <div class="message-input">
             <div class="wrap">
-                <input type="text" placeholder="메시지를 작성하세요..."/>
+                <input type="text" name="message" placeholder="메시지를 작성하세요..."/>
                 <input type="file" multiple id="file" style="display: none;"/>
                 <i class="fa fa-paperclip attachment" aria-hidden="true"></i>
                 <button class="submit">
@@ -223,20 +223,26 @@ function addChatRoomListener() {
             document.querySelector(`.content.room${roomId}`).querySelector('input[type=file]').click();
         });
     });
+    document.querySelector('input[name=search]').addEventListener('input', e => {
+        const value = e.target.value;
+        document.querySelectorAll('li.contact').forEach(element => {
+            element.style.display = element.querySelector('p.name').innerText.includes(value) ? '' : 'none';
+        });
+    });
 }
 
 window.addEventListener('keydown', e => {
-    if (e.which == 13) {
+    if (e.which == 13 && e.target.name === 'message') {
         sendMessage();
         return false;
     }
 });
 
 function onConnected() {
-    $.ajax({
-        url: '/api/v1/chatroom',
-        type: 'get',
-        success: function(data) {
+    const xhr = new XMLHttpRequest();
+    xhr.onload = () => {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
             const promise = new Promise((resolve, reject) => {
                 data.forEach(element => stompClient.subscribe(`/subscribe/topic/${element.id}`, onMessageReceived))
                 resolve();
@@ -277,11 +283,12 @@ function onConnected() {
             });
             scrollBottom();
             addChatRoomListener();
-        },
-        error: function(error) {
-            alert(error);
+        } else if (xhr.readyState === 4 && xhr.status !== 200) {
+            alert("error");
         }
-    });
+    }
+    xhr.open('get', '/api/v1/chatroom');
+    xhr.send();
 }
 
 const socket = new SockJS('/ws');

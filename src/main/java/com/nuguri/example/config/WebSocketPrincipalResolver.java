@@ -7,8 +7,6 @@ import org.springframework.messaging.handler.invocation.HandlerMethodArgumentRes
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
-import java.security.Principal;
-
 public class WebSocketPrincipalResolver implements HandlerMethodArgumentResolver {
 
     @Override
@@ -19,8 +17,7 @@ public class WebSocketPrincipalResolver implements HandlerMethodArgumentResolver
     @Override
     public Object resolveArgument(MethodParameter parameter, Message<?> message) throws Exception {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(message);
-        UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) headerAccessor.getUser();
-        return token.getPrincipal();
+        return ((UsernamePasswordAuthenticationToken) headerAccessor.getUser()).getPrincipal();
     }
 
 }

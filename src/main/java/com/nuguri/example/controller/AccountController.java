@@ -12,7 +12,6 @@ public class AccountController {
 
     @RequestMapping("/account/join")
     public String join(Principal principal) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return "join";
     }
 
