@@ -38,3 +38,6 @@ logging:
           simp:
             user: TRACE
         security: DEBUG
+
+file:
+  path: C:\temp

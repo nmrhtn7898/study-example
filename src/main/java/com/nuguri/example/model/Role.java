@@ -2,7 +2,8 @@ package com.nuguri.example.model;
 
 public enum Role {
 
-    USER, ADMIN;
+    USER,
+    ADMIN;
 
     public static final String PREFIX = "ROLE_";
 

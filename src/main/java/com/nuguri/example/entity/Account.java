@@ -34,17 +34,15 @@ public class Account extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-/*    @ElementCollection(fetch = FetchType.LAZY)
-    private List<Role> roles;*/
-
-    private String profileImage;
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    private ProfileImage profileImage;
 
     @OneToMany(mappedBy = "account", fetch = FetchType.LAZY)
     private List<ChatSubscription> subscriptions = new ArrayList<>();
 
     @Builder
     public Account(String email, String nickname, String name, String password,
-                   Role role, String profileImage) {
+                   Role role, ProfileImage profileImage) {
         this.email = email;
         this.nickname = nickname;
         this.name = name;

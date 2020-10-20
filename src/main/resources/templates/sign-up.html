@@ -37,14 +37,21 @@
                                 <label for="rePassword"><i class="zmdi zmdi-lock-outline"></i></label>
                                 <input type="password" th:field="*{rePassword}" placeholder="비밀번호 재입력"/>
                             </div>
+                            <input type="hidden" th:field="*{profileImage}"/>
                             <div class="form-group form-button">
                                 <input type="submit" name="signup" id="signup" class="form-submit" value="가입하기"/>
                             </div>
+                            <div class="form-group form-button">
+                                <a href="/account/sign-in" class="signup-image-link">이미 계정이 있습니다.</a>
+                            </div>
                         </form>
                     </div>
+
                     <div class="signup-image">
-                        <figure><img src="/images/signup-image.jpg" alt="sing up image"></figure>
-                        <a href="/account/sign-in" class="signup-image-link">이미 계정이 있습니다.</a>
+                        <img src="/images/no-image.png" id="thumb" style="width: 100%; height: 80%;"/>
+                        <div id="thumb-name">no-image.png</div>
+                        <button id="files-upload">프로필 업로드</button>
+                        <input type="file" accept="image/*" style="display: none;"/>
                     </div>
                 </div>
             </div>
@@ -54,19 +61,46 @@
     <script src="/js/base.js"></script>
     <script>
         const registerForm = document.querySelector('#register-form');
+        const imgReader = new FileReader();
+        const imgInput = document.querySelector('input[type=file]');
+        const thumb = document.querySelector('#thumb');
+        const thumbName = document.querySelector('#thumb-name');
+        const profileImage = document.querySelector('input[name=profileImage]');
 
         document.querySelector('#signup').addEventListener('click', e => {
             const xhr = new XMLHttpRequest();
             xhr.onload = () => {
                 if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 201) {
-                    location.href = '/account/sign-in';
+                    const json = JSON.parse(xhr.responseText);
+                    profileImage.value = json.id;
+                    const xhr2 = new XMLHttpRequest();
+                    xhr2.onload = () => {
+                        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 201) {
+                            location.href = '/account/sign-in';
+                        }
+                    };
+                    xhr2.open('post', '/api/v1/account');
+                    xhr2.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                    xhr2.send(serialize(registerForm));
                 }
             };
-            xhr.open('post', '/api/v1/account');
-            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8")
-            xhr.send(serialize(registerForm));
+            const formData = new FormData();
+            formData.append('file', imgInput.files[0]);
+            xhr.open('post', '/api/v1/profileImage');
+            xhr.send(formData);
             e.preventDefault();
         });
+
+        document.querySelector('#files-upload').addEventListener('click', e => imgInput.click());
+
+        imgInput.addEventListener('change', e => {
+            const files = e.target.files[0];
+            thumbName.innerText = files.name;
+            imgReader.readAsDataURL(files);
+        });
+
+        imgReader.onload = e => document.querySelector('#thumb').setAttribute('src', e.target.result);
+
     </script>
 </body>
 </html>

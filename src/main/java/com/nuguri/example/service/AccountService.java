@@ -2,6 +2,7 @@ package com.nuguri.example.service;
 
 import com.nuguri.example.entity.Account;
 import com.nuguri.example.model.AccountAdapter;
+import com.nuguri.example.model.Role;
 import com.nuguri.example.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,6 +11,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Transactional
 @Service
@@ -33,6 +35,11 @@ public class AccountService implements UserDetailsService {
     public Account generateAccount(Account account) {
         account.setPassword(passwordEncoder.encode(account.getPassword()));
         return accountRepository.save(account);
+    }
+
+    public void updateAccount(Account account) {
+        account.setPassword(passwordEncoder.encode(account.getPassword()));
+        accountRepository.updateAccount(account);
     }
 
 }

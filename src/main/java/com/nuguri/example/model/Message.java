@@ -3,8 +3,6 @@ package com.nuguri.example.model;
 import com.nuguri.example.entity.Account;
 import com.nuguri.example.entity.ChatRoom;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;

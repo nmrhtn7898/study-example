@@ -20,7 +20,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .authorizeRequests()
                 .mvcMatchers("/account/sign-up").anonymous()
-                .mvcMatchers(HttpMethod.POST, "/api/v1/account").permitAll()
+                .mvcMatchers(HttpMethod.POST, "/api/v1/account", "/api/v1/file").permitAll()
                 .anyRequest().authenticated();
         http
                 .exceptionHandling()

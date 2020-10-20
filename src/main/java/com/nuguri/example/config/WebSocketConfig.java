@@ -1,10 +1,12 @@
 package com.nuguri.example.config;
 
+import com.nuguri.example.annotation.WebSocketPrincipal;
 import com.nuguri.example.entity.Account;
 import com.nuguri.example.model.AccountAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -41,7 +43,18 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
-        argumentResolvers.add(new WebSocketPrincipalResolver());
+        argumentResolvers.add(new HandlerMethodArgumentResolver() {
+            @Override
+            public boolean supportsParameter(MethodParameter param) {
+                return param.hasParameterAnnotation(WebSocketPrincipal.class);
+            }
+
+            @Override
+            public Object resolveArgument(MethodParameter param, Message<?> message) throws Exception {
+                StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(message);
+                return ((UsernamePasswordAuthenticationToken) headerAccessor.getUser()).getPrincipal();
+            }
+        });
     }
 
     /**

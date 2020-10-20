@@ -124,13 +124,13 @@ public class ChatApiController {
         private Long id;
         private String email;
         private String nickname;
-        private String profileImage;
+        private Long profileImage;
 
         public AccountResponse(Account account) {
             this.id = account.getId();
             this.email = account.getEmail();
             this.nickname = account.getNickname();
-            this.profileImage = account.getProfileImage();
+            this.profileImage = account.getProfileImage().getId();
         }
     }
 

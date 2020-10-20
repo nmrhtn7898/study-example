@@ -23,4 +23,7 @@ public class AccountDto {
     @NotBlank
     private String rePassword;
 
+    @NotBlank
+    private String profileImage;
+
 }
