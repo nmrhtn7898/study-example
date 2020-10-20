@@ -2,11 +2,10 @@ package com.nuguri.example.model;
 
 import com.nuguri.example.entity.Account;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
-import java.util.stream.Collectors;
+import java.util.Collections;
 
 @Getter
 public class AccountAdapter extends User {
@@ -17,11 +16,7 @@ public class AccountAdapter extends User {
         super(
                 account.getEmail(),
                 account.getPassword(),
-                account
-                        .getRoles()
-                        .stream()
-                        .map(r -> new SimpleGrantedAuthority(r.getFullName()))
-                        .collect(Collectors.toList())
+                Collections.singleton(new SimpleGrantedAuthority(account.getRole().getFullName()))
         );
         this.account = account;
     }

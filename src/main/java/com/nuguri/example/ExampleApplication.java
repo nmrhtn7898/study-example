@@ -73,24 +73,27 @@ public class ExampleApplication {
                     .builder()
                     .email("user@naver.com")
                     .nickname("유저")
+                    .name("홍길동")
                     .password(passwordEncoder.encode("1234"))
-                    .roles(Collections.singletonList(Role.USER))
+                    .role(Role.USER)
                     .profileImage("https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRo2s5FzdZZhH7o5Ylzyc88y4lW1HmW-khXIQ&usqp=CAU")
                     .build();
             Account admin = Account
                     .builder()
                     .email("admin@naver.com")
+                    .name("개똥이")
                     .nickname("관리자")
                     .password(passwordEncoder.encode("1234"))
-                    .roles(Collections.singletonList(Role.ADMIN))
+                    .role(Role.ADMIN)
                     .profileImage("https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRh9nDTzbOiZQsJ99PmLuHsBwV2h_zdofEgLA&usqp=CAU")
                     .build();
             Account testUser = Account
                     .builder()
                     .email("test@naver.com")
+                    .name("아무개")
                     .nickname("테스트계정")
                     .password(passwordEncoder.encode("1234"))
-                    .roles(Collections.singletonList(Role.USER))
+                    .role(Role.USER)
                     .profileImage("https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcR-J7QBqEmjThk60iOR_DvL3hjM3MPTub1Ezw&usqp=CAU")
                     .build();
             entityManager.persist(user);

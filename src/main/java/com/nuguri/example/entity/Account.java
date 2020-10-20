@@ -25,10 +25,17 @@ public class Account extends BaseEntity {
     private String nickname;
 
     @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
     private String password;
 
-    @ElementCollection(fetch = FetchType.LAZY)
-    private List<Role> roles;
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
+/*    @ElementCollection(fetch = FetchType.LAZY)
+    private List<Role> roles;*/
 
     private String profileImage;
 
@@ -36,11 +43,13 @@ public class Account extends BaseEntity {
     private List<ChatSubscription> subscriptions = new ArrayList<>();
 
     @Builder
-    public Account(String email, String nickname, String password, List<Role> roles, String profileImage) {
+    public Account(String email, String nickname, String name, String password,
+                   Role role, String profileImage) {
         this.email = email;
         this.nickname = nickname;
+        this.name = name;
         this.password = password;
-        this.roles = roles;
+        this.role = role;
         this.profileImage = profileImage;
     }
 

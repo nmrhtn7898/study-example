@@ -283,7 +283,7 @@ function onConnected() {
             });
             scrollBottom();
             addChatRoomListener();
-        } else if (xhr.readyState === 4 && xhr.status !== 200) {
+        } else if (xhr.readyState === XMLHttpRequest.DONE && xhr.status !== 200) {
             alert("error");
         }
     }

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>회원가입</title>
+    <link rel="stylesheet" href="/fonts/material-icon/css/material-design-iconic-font.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="main">
+        <!-- Sign up form -->
+        <section class="signup">
+            <div class="container">
+                <div class="signup-content">
+                    <div class="signup-form">
+                        <h2 class="form-title">회원가입</h2>
+                        <form th:action="@{/}" th:object="${account}" method="POST" class="register-form" id="register-form">
+                            <div class="form-group">
+                                <label for="email"><i class="zmdi zmdi-email"></i></label>
+                                <input type="email" th:field="*{email}" placeholder="이메일"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="nickname"><i class="zmdi zmdi-account material-icons-name"></i></label>
+                                <input type="text" th:field="*{nickname}" placeholder="닉네임"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="name"><i class="zmdi zmdi-account material-icons-name"></i></label>
+                                <input type="text" th:field="*{name}" placeholder="이름"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="password"><i class="zmdi zmdi-lock"></i></label>
+                                <input type="password" th:field="*{password}" placeholder="비밀번호"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="rePassword"><i class="zmdi zmdi-lock-outline"></i></label>
+                                <input type="password" th:field="*{rePassword}" placeholder="비밀번호 재입력"/>
+                            </div>
+                            <div class="form-group form-button">
+                                <input type="submit" name="signup" id="signup" class="form-submit" value="가입하기"/>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="signup-image">
+                        <figure><img src="/images/signup-image.jpg" alt="sing up image"></figure>
+                        <a href="/account/sign-in" class="signup-image-link">이미 계정이 있습니다.</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    <script src="/vendor/jquery/jquery.min.js"></script>
+    <script src="/js/base.js"></script>
+    <script>
+        const registerForm = document.querySelector('#register-form');
+
+        document.querySelector('#signup').addEventListener('click', e => {
+            const xhr = new XMLHttpRequest();
+            xhr.onload = () => {
+                if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 201) {
+                    location.href = '/account/sign-in';
+                }
+            };
+            xhr.open('post', '/api/v1/account');
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8")
+            xhr.send(serialize(registerForm));
+            e.preventDefault();
+        });
+    </script>
+</body>
+</html>
