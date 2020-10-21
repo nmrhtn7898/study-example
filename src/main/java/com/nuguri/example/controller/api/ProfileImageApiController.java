@@ -4,7 +4,8 @@ import com.nuguri.example.entity.Files;
 import com.nuguri.example.entity.ProfileImage;
 import com.nuguri.example.repository.FilesRepository;
 import com.nuguri.example.service.FilesService;
-import com.nuguri.example.util.FileUtil;
+import com.nuguri.example.util.FilesUtil;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -23,34 +24,26 @@ import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
-public class FileApiController {
+public class ProfileImageApiController {
 
     private final FilesService filesService;
 
     private final FilesRepository filesRepository;
 
-    private final FileUtil fileUtil;
+    private final FilesUtil filesUtil;
 
     @GetMapping("/api/v1/profileImage/{id}")
-    public ResponseEntity getProfileImage(@PathVariable Long id) throws IOException {
+    public ResponseEntity getProfileImage(@PathVariable Long id) {
         Optional<Files> byId = filesRepository.findById(id);
         if (!byId.isPresent()) {
             return ResponseEntity.notFound().build();
         }
-        Files file = byId.get();
-        String filename = file.getName();
-        Resource resource = fileUtil.download(file.getFilePath());
-        return ResponseEntity
-                .ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .header(HttpHeaders.CONTENT_TYPE, filename)
-                .header(HttpHeaders.CONTENT_LENGTH, resource.getFile().length() + "")
-                .body(resource);
+        return ResponseEntity.ok().body(byId.get());
     }
 
     @PostMapping("/api/v1/profileImage")
     public ResponseEntity generateProfileImage(MultipartFile file) throws IOException, URISyntaxException {
-        String filePath = fileUtil.upload(file);
+        String filePath = filesUtil.upload(file);
         ProfileImage profileImage = ProfileImage
                 .builder()
                 .filePath(filePath)
@@ -61,6 +54,8 @@ public class FileApiController {
                 .created(new URI("/api/v1/file/" + profileImage))
                 .body(new GenerateProfileResponse(profileImage));
     }
+
+
 
     @Data
     public static class GenerateProfileResponse {

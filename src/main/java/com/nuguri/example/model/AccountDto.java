@@ -1,9 +1,11 @@
 package com.nuguri.example.model;
 
+import com.nuguri.example.entity.ProfileImage;
 import lombok.Data;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 @Data
 public class AccountDto {
@@ -23,7 +25,7 @@ public class AccountDto {
     @NotBlank
     private String rePassword;
 
-    @NotBlank
-    private String profileImage;
+    @NotNull
+    private Long profileImageId;
 
 }

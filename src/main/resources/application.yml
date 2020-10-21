@@ -39,5 +39,9 @@ logging:
             user: TRACE
         security: DEBUG
 
+jwt:
+  secret: jwtenckey
+  validity: 18000
+
 file:
   path: C:\temp

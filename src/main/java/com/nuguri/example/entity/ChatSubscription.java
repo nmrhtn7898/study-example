@@ -22,7 +22,8 @@ public class ChatSubscription extends BaseEntity {
     private Account account;
 
     @Builder
-    public ChatSubscription(ChatRoom chatRoom, Account account) {
+    public ChatSubscription(Long id, ChatRoom chatRoom, Account account) {
+        this.id = id;
         this.chatRoom = chatRoom;
         this.account = account;
         chatRoom.getSubscriptions().add(this);

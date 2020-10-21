@@ -31,7 +31,8 @@ public class ChatRoom extends BaseEntity {
     private List<ChatMessage> messages = new ArrayList<>();
 
     @Builder
-    public ChatRoom(String name, RoomType roomType) {
+    public ChatRoom(Long id, String name, RoomType roomType) {
+        this.id = id;
         this.name = name;
         this.roomType = roomType;
     }

@@ -37,7 +37,7 @@ public class AccountApiController {
 
     @GetMapping("/api/v1/account/{id}")
     public ResponseEntity getAccount(@PathVariable Long id, @AuthenticationPrincipal AccountAdapter accountAdapter) {
-        if (!id.equals(accountAdapter.getId())) {
+        if (!id.equals(accountAdapter.getAccount().getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         Optional<Account> byId = accountRepository.findById(id);
@@ -56,8 +56,6 @@ public class AccountApiController {
         if (accountRepository.existsByEmail(accountDto.getEmail())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
-        ProfileImage profileImage = new ProfileImage();
-        profileImage.setId(accountDto.getProfileImage());
         Account account = Account
                 .builder()
                 .email(accountDto.getEmail())
@@ -65,7 +63,12 @@ public class AccountApiController {
                 .name(accountDto.getName())
                 .password(accountDto.getPassword())
                 .role(Role.USER)
-                .profileImage(profileImage)
+                .profileImage(
+                        ProfileImage
+                                .builder()
+                                .id(accountDto.getProfileImageId())
+                                .build()
+                )
                 .build();
         account = accountService.generateAccount(account);
         return ResponseEntity.created(new URI("/api/v1/account" + account.getId())).build();
@@ -74,7 +77,7 @@ public class AccountApiController {
     @PatchMapping("/api/v1/account/{id}")
     public ResponseEntity updateAccount(@RequestBody @Valid AccountDto accountDto, Errors errors
             , @PathVariable Long id, @AuthenticationPrincipal AccountAdapter accountAdapter) {
-        if (!id.equals(accountAdapter.getId())) {
+        if (!id.equals(accountAdapter.getAccount().getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (errors.hasErrors()) {
@@ -83,15 +86,18 @@ public class AccountApiController {
         if (!accountRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
-        ProfileImage profileImage = new ProfileImage();
-        profileImage.setId(accountDto.getProfileImage());
         Account account = Account
                 .builder()
                 .email(accountDto.getEmail())
                 .nickname(accountDto.getNickname())
                 .name(accountDto.getName())
                 .password(accountDto.getPassword())
-                .profileImage(profileImage)
+                .profileImage(
+                        ProfileImage
+                                .builder()
+                                .id(accountDto.getProfileImageId())
+                                .build()
+                )
                 .build();
         accountService.updateAccount(account);
         return ResponseEntity.ok().build();
@@ -99,7 +105,7 @@ public class AccountApiController {
 
     @DeleteMapping("/api/v1/account/{id}")
     public ResponseEntity deleteAccount(@PathVariable Long id, @AuthenticationPrincipal AccountAdapter accountAdapter) {
-        if (!id.equals(accountAdapter.getId())) {
+        if (!id.equals(accountAdapter.getAccount().getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         accountRepository.deleteById(id);

@@ -1,11 +1,6 @@
 package com.nuguri.example.model;
 
-import com.nuguri.example.entity.Account;
-import com.nuguri.example.entity.ChatRoom;
 import lombok.Data;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Data
 public class Message {
@@ -14,37 +9,24 @@ public class Message {
 
     private String content;
 
-    private AccountDto sender;
+    private MessageAccountDto sender;
 
-    private ChatRoomDto chatRoom;
+    private Long chatRoomId;
 
-    public ChatRoom getChatRoom() {
-        ChatRoom chatRoom = new ChatRoom();
-        chatRoom.setId(this.chatRoom.getId());
-        return chatRoom;
-    }
-
-    public void setAccount(Account account) {
-        this.sender = new AccountDto();
-        sender.setId(account.getId());
-        sender.setEmail(account.getEmail());
-        sender.setNickname(account.getNickname());
-        sender.setProfileImage(account.getProfileImage());
+    public void setAccountAdapter(AccountAdapter accountAdapter) {
+        this.sender = new MessageAccountDto(accountAdapter);
     }
 
     @Data
-    public static class AccountDto {
+    public static class MessageAccountDto {
         private Long id;
         private String email;
-        private String nickname;
-        private String profileImage;
-    }
+        ;
 
-    @Data
-    public static class ChatRoomDto {
-        private Long id;
-        private String name;
-        private List<AccountDto> members = new ArrayList<>();
+        public MessageAccountDto(AccountAdapter accountAdapter) {
+            this.id = accountAdapter.getAccount().getId();
+            this.email = accountAdapter.getAccount().getEmail();
+        }
     }
 
 }

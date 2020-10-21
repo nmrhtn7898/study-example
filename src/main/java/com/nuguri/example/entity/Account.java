@@ -41,8 +41,9 @@ public class Account extends BaseEntity {
     private List<ChatSubscription> subscriptions = new ArrayList<>();
 
     @Builder
-    public Account(String email, String nickname, String name, String password,
-                   Role role, ProfileImage profileImage) {
+    public Account(Long id, String email, String nickname, String name,
+                   String password, Role role, ProfileImage profileImage) {
+        this.id = id;
         this.email = email;
         this.nickname = nickname;
         this.name = name;

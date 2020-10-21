@@ -80,8 +80,12 @@
                         }
                     };
                     xhr2.open('post', '/api/v1/account');
-                    xhr2.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-                    xhr2.send(serialize(registerForm));
+                    xhr2.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+                    const obj = serializeObject(registerForm);
+                    obj.profileImage = {
+                        profileImage: obj.profileImage
+                    };
+                    xhr2.send(obj);
                 }
             };
             const formData = new FormData();

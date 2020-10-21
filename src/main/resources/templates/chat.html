@@ -192,11 +192,11 @@ function onMessageReceived(payload) {
     }
     const status = message.sender.id === userId ? 'sent' : 'replies';
     const profileImage = message.sender.profileImage;
-    document.querySelector(`.content.room${message.chatRoom.id} .messages ul`).innerHTML += messageListTemplate
+    document.querySelector(`.content.room${message.chatRoomId} .messages ul`).innerHTML += messageListTemplate
                         .replace('{message}', message.content)
                         .replace('{profileImage}', message.sender.profileImage)
                         .replace('{status}', message.sender.id === userId ? 'sent' : 'replies');
-    document.querySelector(`.contact.room${message.chatRoom.id} .preview`).innerHTML = `<span>${status}: </span>${message.content}`;
+    document.querySelector(`.contact.room${message.chatRoomId} .preview`).innerHTML = `<span>${status}: </span>${message.content}`;
 	scrollBottom();
 }
 

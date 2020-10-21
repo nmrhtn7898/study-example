@@ -1,9 +1,6 @@
 package com.nuguri.example.entity;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 
@@ -26,7 +23,8 @@ public class Files extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String name;
 
-    public Files(String filePath, String name) {
+    public Files(Long id, String filePath, String name) {
+        this.id = id;
         this.filePath = filePath;
         this.name = name;
     }

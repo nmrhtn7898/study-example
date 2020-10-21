@@ -17,12 +17,12 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.web.messaging.MessageSecurityMetadataSourceRegistry;
+import org.springframework.security.config.annotation.web.socket.AbstractSecurityWebSocketMessageBrokerConfigurer;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
-import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
-import org.springframework.web.socket.server.support.AbstractHandshakeHandler;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
 import javax.persistence.EntityManager;
@@ -37,7 +37,7 @@ import java.util.Map;
 @Configuration
 @Slf4j
 @RequiredArgsConstructor
-public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+public class WebSocketConfig extends AbstractSecurityWebSocketMessageBrokerConfigurer {
 
     private final EntityManager entityManager;
 
@@ -72,7 +72,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     @Override
                     protected Principal determineUser(ServerHttpRequest request, WebSocketHandler wsHandler, Map<String, Object> attributes) {
                         AccountAdapter accountAdapter = (AccountAdapter) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-                        log.info("{}({}) 님이 채팅 서버에 접속하였습니다.", accountAdapter.getEmail(), accountAdapter.getNickname());
+                        log.info("{} 님이 채팅 서버에 접속하였습니다.", accountAdapter.getAccount().getEmail());
                         return request.getPrincipal();
                     }
                 })
@@ -81,7 +81,21 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     }
 
     @Override
-    public void configureClientInboundChannel(ChannelRegistration registration) {
+    protected void configureInbound(MessageSecurityMetadataSourceRegistry messages) {
+        messages
+                .nullDestMatcher().authenticated()
+                .simpDestMatchers("/publish/**").authenticated()
+                .simpSubscribeDestMatchers("/subscribe/**").authenticated()
+                .anyMessage().denyAll();
+    }
+
+    @Override
+    protected boolean sameOriginDisabled() {
+        return true;
+    }
+
+    @Override
+    protected void customizeClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(new ChannelInterceptor() {
             @Override
             public Message<?> preSend(Message<?> message, MessageChannel channel) {

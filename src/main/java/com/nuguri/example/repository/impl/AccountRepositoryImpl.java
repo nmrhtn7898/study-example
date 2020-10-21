@@ -1,6 +1,7 @@
 package com.nuguri.example.repository.impl;
 
 import com.nuguri.example.entity.Account;
+import com.nuguri.example.entity.ProfileImage;
 import com.nuguri.example.entity.QAccount;
 import com.nuguri.example.model.Role;
 import com.nuguri.example.repository.custom.AccountRepositoryCustom;
@@ -8,6 +9,8 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.querydsl.jpa.impl.JPAUpdateClause;
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.StringUtils;
+
+import static com.nuguri.example.entity.QAccount.account;
 
 @RequiredArgsConstructor
 public class AccountRepositoryImpl implements AccountRepositoryCustom {
@@ -19,7 +22,7 @@ public class AccountRepositoryImpl implements AccountRepositoryCustom {
         String nickname = account.getNickname();
         String name = account.getName();
         String password = account.getPassword();
-        String profileImage = account.getProfileImage();
+        ProfileImage profileImage = account.getProfileImage();
         Role role = account.getRole();
         JPAUpdateClause updateQuery = jpaQueryFactory.update(QAccount.account);
         if (StringUtils.hasText(email)) {
@@ -34,7 +37,7 @@ public class AccountRepositoryImpl implements AccountRepositoryCustom {
         if (StringUtils.hasText(password)) {
             updateQuery.set(QAccount.account.password, password);
         }
-        if (StringUtils.hasText(profileImage)) {
+        if (profileImage != null) {
             updateQuery.set(QAccount.account.profileImage, profileImage);
         }
         if (role != null) {

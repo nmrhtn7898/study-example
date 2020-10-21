@@ -24,7 +24,8 @@ public class ChatMessage extends BaseEntity {
     private Account sender;
 
     @Builder
-    public ChatMessage(String content, ChatRoom chatRoom, Account sender) {
+    public ChatMessage(Long id, String content, ChatRoom chatRoom, Account sender) {
+        this.id = id;
         this.content = content;
         this.chatRoom = chatRoom;
         this.sender = sender;

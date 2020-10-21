@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface AccountRepository extends JpaRepository<Account, Long>, AccountRepositoryCustom {
 
-    @EntityGraph(attributePaths = "roles", type = EntityGraph.EntityGraphType.FETCH)
+    @EntityGraph(attributePaths = "profileImage", type = EntityGraph.EntityGraphType.FETCH)
     Optional<Account> findByEmail(String email);
 
     boolean existsByEmail(String email);

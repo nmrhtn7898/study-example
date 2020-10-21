@@ -14,8 +14,8 @@ import javax.persistence.*;
 public class ProfileImage extends Files {
 
     @Builder
-    public ProfileImage(String filePath, String name) {
-        super(filePath, name);
+    public ProfileImage(Long id, String filePath, String name) {
+        super(id, filePath, name);
     }
 
 }

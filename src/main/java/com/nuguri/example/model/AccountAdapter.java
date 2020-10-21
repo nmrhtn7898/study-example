@@ -1,11 +1,15 @@
 package com.nuguri.example.model;
 
+import com.nuguri.example.controller.api.FilesApiController;
 import com.nuguri.example.entity.Account;
 import lombok.Getter;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
 import java.util.Collections;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Getter
 public class AccountAdapter extends User {
@@ -19,22 +23,6 @@ public class AccountAdapter extends User {
                 Collections.singleton(new SimpleGrantedAuthority(account.getRole().getFullName()))
         );
         this.account = account;
-    }
-
-    public Long getId() {
-        return account.getId();
-    }
-
-    public String getEmail() {
-        return account.getEmail();
-    }
-
-    public String getNickname() {
-        return account.getNickname();
-    }
-
-    public String getProfileImage() {
-        return account.getProfileImage();
     }
 
 }

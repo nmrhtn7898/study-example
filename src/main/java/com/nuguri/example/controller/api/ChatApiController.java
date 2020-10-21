@@ -10,6 +10,7 @@ import com.nuguri.example.model.RoomType;
 import com.nuguri.example.repository.ChatMessageRepository;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -23,6 +24,8 @@ import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
  * MessageMapping 애노테이션이 붙은 핸들러는 WebSocketConfig
@@ -47,11 +50,17 @@ public class ChatApiController {
         ChatMessage chatMessage = ChatMessage
                 .builder()
                 .content(message.getContent())
-                .chatRoom(message.getChatRoom())
+                .chatRoom(
+                        ChatRoom
+                                .builder()
+                                .id(chatRoomId)
+                                .build()
+                )
                 .sender(accountAdapter.getAccount())
                 .build();
         chatMessageRepository.save(chatMessage);
-        message.setAccount(accountAdapter.getAccount());
+        message.setAccountAdapter(accountAdapter);
+        message.setChatRoomId(chatRoomId);
         sendingOperations.convertAndSend("/subscribe/topic/" + chatRoomId, message);
     }
 
@@ -124,13 +133,16 @@ public class ChatApiController {
         private Long id;
         private String email;
         private String nickname;
-        private Long profileImage;
+        private String profileImage;
 
         public AccountResponse(Account account) {
             this.id = account.getId();
             this.email = account.getEmail();
             this.nickname = account.getNickname();
-            this.profileImage = account.getProfileImage().getId();
+            Long profileImageId = account.getProfileImage().getId();
+            this.profileImage = WebMvcLinkBuilder
+                    .linkTo(methodOn(FilesApiController.class).download(profileImageId))
+                    .toString();
         }
     }
 
