@@ -43,9 +43,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .authorizeRequests()
-                .mvcMatchers("/account/sign-up", "/account/sign-in").anonymous()
-                .mvcMatchers(HttpMethod.POST, "/api/v1/account").permitAll()
-                .anyRequest().authenticated();
+                .mvcMatchers("/ws").authenticated();
         http
                 .exceptionHandling()
                 .accessDeniedPage("/");
@@ -111,7 +109,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                                 }
                                 if (tokenUtil.isJwtTokenExpired(claims)) {
                                     res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token is Expired");
-                                    Cookie cookie = new Cookie("token", "");
                                     return;
                                 }
                                 AccountAdapter accountAdapter = new AccountAdapter(

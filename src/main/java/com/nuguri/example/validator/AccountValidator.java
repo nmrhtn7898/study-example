@@ -1,6 +1,5 @@
 package com.nuguri.example.validator;
 
-import com.nuguri.example.model.AccountDto;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 

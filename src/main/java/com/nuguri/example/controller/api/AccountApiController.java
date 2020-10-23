@@ -9,9 +9,11 @@ import com.nuguri.example.service.AccountService;
 import com.nuguri.example.validator.AccountValidator;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
@@ -20,11 +22,11 @@ import javax.validation.Valid;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Optional;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+import static org.springframework.http.HttpMethod.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,6 +38,9 @@ public class AccountApiController {
 
     private final AccountValidator accountValidator;
 
+    private static final AccountApiController controller = methodOn(AccountApiController.class);
+
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/api/v1/account/me")
     public ResponseEntity getMe(@AuthenticationPrincipal AccountAdapter accountAdapter) {
         Long id = accountAdapter
@@ -49,7 +54,8 @@ public class AccountApiController {
         }
         Account account = byId.get();
         GetAccountResponse response = new GetAccountResponse(account);
-        return ResponseEntity.ok(response);
+        GetMeResource resource = new GetMeResource(response);
+        return ResponseEntity.ok(resource);
     }
 
     @GetMapping("/api/v1/account")
@@ -57,6 +63,7 @@ public class AccountApiController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/api/v1/account/{id}")
     public ResponseEntity getAccount(@PathVariable Long id, @AuthenticationPrincipal AccountAdapter accountAdapter) {
         if (!id.equals(accountAdapter.getAccount().getId())) {
@@ -72,13 +79,15 @@ public class AccountApiController {
         }
         Account account = byId.get();
         GetAccountResponse response = new GetAccountResponse(account);
+        GetAccountResource resource = new GetAccountResource(response);
         return ResponseEntity
                 .ok()
-                .body(response);
+                .body(resource);
     }
 
+    @PreAuthorize("permitAll()")
     @PostMapping("/api/v1/account")
-    public ResponseEntity generateAccount(@RequestBody @Valid GenerateAccountRequest request, Errors errors) throws URISyntaxException {
+    public ResponseEntity generateAccount(@RequestBody @Valid GenerateAccountRequest request, Errors errors) {
         if (errors.hasErrors() ||
                 !accountValidator.isPassEqualsWithRePass(request.password, request.getRePassword(), errors)) {
             return ResponseEntity
@@ -105,11 +114,14 @@ public class AccountApiController {
                 )
                 .build();
         account = accountService.generateAccount(account);
+        GenerateAccountResource resource = new GenerateAccountResource(account.getId());
+        resource.getLink("self");
         return ResponseEntity
-                .created(new URI("/api/v1/account" + account.getId()))
-                .build();
+                .created(resource.getLink("self").get().toUri())
+                .body(resource);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PatchMapping("/api/v1/account/{id}")
     public ResponseEntity updateAccount(@RequestBody @Valid UpdateAccountRequest request, Errors errors,
                                         @PathVariable Long id, @AuthenticationPrincipal AccountAdapter accountAdapter) {
@@ -147,6 +159,7 @@ public class AccountApiController {
                 .build();
     }
 
+    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/api/v1/account/{id}")
     public ResponseEntity deleteAccount(@PathVariable Long id, @AuthenticationPrincipal AccountAdapter accountAdapter) {
         if (!id.equals(accountAdapter.getAccount().getId())) {
@@ -163,6 +176,7 @@ public class AccountApiController {
     /* dto class */
     @Getter
     public static class GetAccountResponse {
+        private final Long id;
         private final String email;
         private final String nickname;
         private final String name;
@@ -170,6 +184,7 @@ public class AccountApiController {
         private final String profileImage;
 
         public GetAccountResponse(Account account) {
+            this.id = account.getId();
             this.email = account.getEmail();
             this.nickname = account.getNickname();
             this.name = account.getName();
@@ -177,6 +192,79 @@ public class AccountApiController {
             this.profileImage = WebMvcLinkBuilder
                     .linkTo(methodOn(FilesApiController.class).download(account.getProfileImage().getId()))
                     .toString();
+        }
+    }
+
+    @Getter
+    public static class GenerateAccountResource extends EntityModel<Void> {
+        public GenerateAccountResource(Long id) {
+            add(
+                    linkTo(controller.generateAccount(null, null))
+                            .withSelfRel()
+                            .withType(POST.name())
+            );
+            add(
+                    linkTo(controller.getAccount(id, null))
+                            .withRel("get")
+                            .withType(GET.name())
+            );
+            add(
+                    linkTo(controller.updateAccount(null, null, id, null))
+                            .withRel("update")
+                            .withType(PATCH.name())
+            );
+            add(
+                    linkTo(controller.deleteAccount(id, null))
+                            .withRel("delete")
+                            .withType(DELETE.name())
+            );
+        }
+    }
+
+    @Getter
+    public static class GetMeResource extends EntityModel<GetAccountResponse> {
+        private final GetAccountResponse content;
+
+        public GetMeResource(GetAccountResponse response) {
+            this.content = response;
+            add(
+                    linkTo(controller.getMe(null))
+                            .withSelfRel()
+                            .withType(GET.name())
+            );
+            add(
+                    linkTo(controller.updateAccount(null, null, response.getId(), null))
+                            .withRel("update")
+                            .withType(PATCH.name()));
+            add(
+                    linkTo(controller.deleteAccount(response.getId(), null))
+                            .withRel("delete")
+                            .withType(DELETE.name())
+            );
+        }
+    }
+
+    @Getter
+    public static class GetAccountResource extends EntityModel<GetAccountResponse> {
+        private final GetAccountResponse content;
+
+        public GetAccountResource(GetAccountResponse response) {
+            this.content = response;
+            add(
+                    linkTo(controller.getAccount(response.getId(), null))
+                            .withSelfRel()
+                            .withType(GET.name())
+            );
+            add(
+                    linkTo(controller.updateAccount(null, null, response.getId(), null))
+                            .withRel("update")
+                            .withType(PATCH.name())
+            );
+            add(
+                    linkTo(controller.deleteAccount(response.getId(), null))
+                            .withRel("delete")
+                            .withType(DELETE.name())
+            );
         }
     }
 
