@@ -41,7 +41,8 @@ logging:
 
 jwt:
   secret: jwtenckey
-  validity: 18000
+  validity: 1800
+  type: bearer
 
 file:
   path: C:\temp

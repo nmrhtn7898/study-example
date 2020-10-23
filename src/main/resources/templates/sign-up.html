@@ -85,7 +85,7 @@
                     obj.profileImage = {
                         profileImage: obj.profileImage
                     };
-                    xhr2.send(obj);
+                    xhr2.send(JSON.stringify(obj));
                 }
             };
             const formData = new FormData();

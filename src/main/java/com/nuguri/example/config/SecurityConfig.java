@@ -1,6 +1,5 @@
 package com.nuguri.example.config;
 
-import com.nuguri.example.controller.view.AccountController;
 import com.nuguri.example.entity.Account;
 import com.nuguri.example.model.AccountAdapter;
 import com.nuguri.example.model.Role;
@@ -15,12 +14,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -31,9 +30,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collections;
-
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Configuration
 @RequiredArgsConstructor
@@ -66,28 +62,27 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .loginPage("/account/sign-in")
                 .loginProcessingUrl("/account/sign-in")
                 .successHandler((request, response, authentication) -> {
-                    AccountAdapter accountAdapter = (AccountAdapter) authentication.getPrincipal();
-                    String token = tokenUtil.generateJwtToken(accountAdapter.getAccount());
-                    Cookie cookie = new Cookie(HttpHeaders.AUTHORIZATION, token);
+                    Account account = ((AccountAdapter) authentication.getPrincipal()).getAccount();
+                    String token = tokenUtil.generateJwtToken(account);
+                    Cookie cookie = new Cookie("token", token);
+                    cookie.setPath("/");
                     cookie.setHttpOnly(true);
                     response.addCookie(cookie);
-                    response.sendRedirect("/");
+                    response.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + token);
                 })
                 .permitAll();
         http
                 .logout()
                 .logoutRequestMatcher(new AntPathRequestMatcher("/account/sign-out", "GET"))
                 .logoutSuccessUrl("/account/sign-in");
-        http
+/*        http
                 .rememberMe()
                 .userDetailsService(userDetailsService)
                 .rememberMeParameter("remember-me")
-                .rememberMeCookieName("remember-me");
+                .rememberMeCookieName("remember-me");*/
         http
                 .sessionManagement()
-                .maximumSessions(1)
-                .maxSessionsPreventsLogin(false)
-                .expiredUrl("/account/sign-in");
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         http
                 .addFilterBefore(
                         new OncePerRequestFilter() {
@@ -95,11 +90,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                             protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res,
                                                             FilterChain fc) throws IOException, ServletException {
                                 String token = req.getHeader(HttpHeaders.AUTHORIZATION);
-                                if (StringUtils.isEmpty(token) || token.startsWith("Bearer ")) {
+                                if (StringUtils.isEmpty(token)) {
+                                    for (Cookie cookie : req.getCookies()) {
+                                        if (cookie.getName().equals("token")) {
+                                            token = "Bearer " + cookie.getValue();
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (StringUtils.isEmpty(token) || !token.startsWith("Bearer ")) {
                                     res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
                                     return;
                                 }
-                                token = token.substring(7);
                                 Claims claims;
                                 try {
                                     claims = tokenUtil.getClaimsFromToken(token);
@@ -109,14 +111,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                                 }
                                 if (tokenUtil.isJwtTokenExpired(claims)) {
                                     res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token is Expired");
+                                    Cookie cookie = new Cookie("token", "");
                                     return;
                                 }
                                 AccountAdapter accountAdapter = new AccountAdapter(
                                         Account
                                                 .builder()
                                                 .id(claims.get("id", Long.class))
+                                                .password("")
                                                 .email(claims.get("email", String.class))
-                                                .role(claims.get("role", Role.class))
+                                                .role(Role.valueOf(claims.get("role", String.class)))
                                                 .build()
                                 );
                                 UsernamePasswordAuthenticationToken authenticationToken =

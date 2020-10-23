@@ -59,7 +59,7 @@ public class ChatApiController {
                 .sender(accountAdapter.getAccount())
                 .build();
         chatMessageRepository.save(chatMessage);
-        message.setAccountAdapter(accountAdapter);
+        message.setSenderId(accountAdapter.getAccount().getId());
         message.setChatRoomId(chatRoomId);
         sendingOperations.convertAndSend("/subscribe/topic/" + chatRoomId, message);
     }

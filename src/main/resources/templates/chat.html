@@ -21,8 +21,8 @@
     <div id="sidepanel">
         <div id="profile">
             <div class="wrap">
-                <img id="profile-img" th:src="${#authentication.principal.profileImage}" class="online" alt=""/>
-                <p sec:authentication="principal.nickname">닉네임</p>
+                <img id="profile-img" class="online" alt=""/>
+                <p id="profile-nickname">닉네임</p>
                 <i class="fa fa-chevron-down expand-button" aria-hidden="true"></i>
                 <div id="status-options">
                     <ul>
@@ -64,6 +64,7 @@
     </div>
 
 </div>
+<script src="/js/base.js"></script>
 <script src='//production-assets.codepen.io/assets/common/stopExecutionOnTimeout-b2a7b3fe212eaa732349046d8416e00a9dec26eb7fd347590fbced3ab38af52e.js'></script>
 <script src='https://code.jquery.com/jquery-2.2.4.min.js'></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script>
@@ -121,15 +122,15 @@
 </script>
 
 <script>
-const userId = [[${#authentication.principal.id}]];
-const email = '[[${#authentication.principal.email}]]';
-const nickname = '[[${#authentication.principal.nickname}]]';
+let account;
 
 document.querySelector('#profile-img').addEventListener('click', () => document.querySelector('#status-options').classList.toggle('active'));
+
 document.querySelector('.expand-button').addEventListener('click', () => {
     document.querySelector('#profile').classList.toggle('expanded');
     document.querySelector('#contacts').classList.toggle('expanded');
 });
+
 document.querySelectorAll('#status-options ul li').forEach(element =>
     element.addEventListener('click', e => {
         const profileImg = document.querySelector('#profile-img');
@@ -158,7 +159,6 @@ document.querySelectorAll('#status-options ul li').forEach(element =>
         document.querySelector('#status-options').classList.remove('active');
     })
 );
-
 
 function sendMessage() {
     const roomId = document.querySelector('li.contact.active').dataset['roomId'];
@@ -190,12 +190,12 @@ function onMessageReceived(payload) {
     } else if (message.messageType === 'LEAVE') {
         message.content = message.sender + ' 님이 채팅을 나가셨습니다.';
     }
-    const status = message.sender.id === userId ? 'sent' : 'replies';
+    const status = message.senderId === account.id ? 'sent' : 'replies';
     const profileImage = message.sender.profileImage;
     document.querySelector(`.content.room${message.chatRoomId} .messages ul`).innerHTML += messageListTemplate
                         .replace('{message}', message.content)
                         .replace('{profileImage}', message.sender.profileImage)
-                        .replace('{status}', message.sender.id === userId ? 'sent' : 'replies');
+                        .replace('{status}', message.senderId === account.id ? 'sent' : 'replies');
     document.querySelector(`.contact.room${message.chatRoomId} .preview`).innerHTML = `<span>${status}: </span>${message.content}`;
 	scrollBottom();
 }
@@ -255,14 +255,14 @@ function onConnected() {
                 let contentListHtml = '';
                 let messageListHtml = '';
                 const isActiveChatRoom = index === 0;
-                const members = element.members.filter(member => member.nickname !== nickname);
+                const members = element.members.filter(member => member.nickname !== account.nickname);
                 const memberNames = members.map(member => member.nickname).join(', ');
                 const profileImage = element.roomType === 'DIRECT' ? members[0].profileImage : '여러명 이미지 합친거';
                 roomListHtml += roomListTemplate
                         .replace('{name}', memberNames)
                         .replace('{profileImage}', profileImage)
                         .replace('{content}', element.messages.length > 0 ?
-                            `<span>${element.messages[element.messages.length - 1].sender.id === userId ? 'sent' : 'replies'}: </span>${element.messages[element.messages.length - 1].content}` : '')
+                            `<span>${element.messages[element.messages.length - 1].sender.id === account.id ? 'sent' : 'replies'}: </span>${element.messages[element.messages.length - 1].content}` : '')
                         .replaceAll('{id}', element.id)
                         .replace('{active}', isActiveChatRoom ? 'active' : '')
                         .replace('{status}', 'online');
@@ -270,7 +270,7 @@ function onConnected() {
                     messageListHtml += messageListTemplate
                                                             .replace('{message}', message.content)
                                                             .replace('{profileImage}', message.sender.profileImage)
-                                                            .replace('{status}', message.sender.id === userId ? 'sent' : 'replies');
+                                                            .replace('{status}', message.sender.id === account.id ? 'sent' : 'replies');
                 });
                 contentListHtml += contentListTemplate
                                                         .replace('{id}', element.id)
@@ -291,9 +291,16 @@ function onConnected() {
     xhr.send();
 }
 
+loadLoggedInAccount(response => {
+    account = response;
+    document.querySelector('#profile-img').src = response.profileImage;
+    document.querySelector('#profile-nickname').innerText = response.nickname;
+});
+
 const socket = new SockJS('/ws');
 stompClient = Stomp.over(socket);
 stompClient.connect({}, onConnected, error => alert(error));
+
 
 </script>
 </body></html>

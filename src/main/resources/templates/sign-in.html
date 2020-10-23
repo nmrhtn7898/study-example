@@ -52,5 +52,21 @@
         </section>
     </div>
     <script src="/vendor/jquery/jquery.min.js"></script>
+    <script src="/js/base.js"></script>
+    <script>
+        document.querySelector('#login-form').addEventListener('submit', e => {
+            fetch('/account/sign-in', {
+                method: 'post',
+                body: new FormData(e.target)
+            })
+            .then(response => {
+                 const token = response.headers.get('Authorization');
+                 sessionStorage.setItem('token', token);
+                 location.href = '/';
+            })
+            .catch(console.log);
+            e.preventDefault();
+        });
+    </script>
 </body>
 </html>

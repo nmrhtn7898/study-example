@@ -5,7 +5,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.impl.DefaultClaims;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -15,14 +14,16 @@ import java.util.Map;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 public class TokenUtil {
 
     @Value("${jwt.secret}")
     private String secret;
 
     @Value("${jwt.validity}")
-    private long validity;
+    private int validity;
+
+    @Value("${jwt.type}")
+    private String type;
 
     public Claims generateClaims(Account account) {
         Map<String, Object> map = new HashMap<>();
@@ -39,7 +40,7 @@ public class TokenUtil {
                 .builder()
                 .setId(UUID.randomUUID().toString())
                 .setClaims(generateClaims(account))
-                .setIssuedAt(new Date(timeMillis))
+                .setIssuedAt(new Date())
                 .setExpiration(new Date(timeMillis + validity * 1000))
                 .signWith(SignatureAlgorithm.HS512, secret)
                 .compact();
@@ -47,6 +48,7 @@ public class TokenUtil {
     }
 
     public Claims getClaimsFromToken(String token) {
+        token = token.substring(7);
         return Jwts
                 .parser()
                 .setSigningKey(secret)
